@@ -1,3 +1,4 @@
+```python
 git clone https://github.com/1sh1ro/fucktju250630.git
 cd fucktju250630/Agentless
 
@@ -8,3 +9,4 @@ pip install -r requirements.txt
 export PYTHONPATH=$PYTHONPATH:$(pwd)
 
 export DEEPSEEK_API_KEY={key_here}
+```
