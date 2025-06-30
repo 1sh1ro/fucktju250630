@@ -13,3 +13,7 @@ export PYTHONPATH=$PYTHONPATH:$(pwd)
 
 export DEEPSEEK_API_KEY={key_here}
 ```
+command
+```python
+python -m agentless.fl.localize --file_level --output_folder ./root/Agentless/agentless/results/linux_final --dataset /root/Agentless/datasets.jsonl --model deepseek-coder --hierarchical --target_subdirectories fs net drivers kernel --top_n 5 --num_threads 1
+```
