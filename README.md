@@ -7,6 +7,7 @@ conda create -n agentless python=3.11
 conda activate agentless
 conda install -c conda-forge gcc_linux-64 gxx_linux-64
 conda update -c conda-forge rust
+pip install datasets
 pip install -r requirements.txt
 export PYTHONPATH=$PYTHONPATH:$(pwd)
 
