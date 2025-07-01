@@ -794,8 +794,13 @@ class KernelLLMFL(LLMFL):
     """专门用于Linux内核故障定位的FL类"""
     
     def __init__(self, instance_id, structure, problem_statement, model_name, backend, logger, kernel_subdirs=None, **kwargs):
+        print(f"--- DEBUG: KernelLLMFL __init__ received kernel_subdirs: {kernel_subdirs} ---")
+        
         super().__init__(instance_id, structure, problem_statement, model_name, backend, logger, **kwargs)
         self.kernel_subdirs = kernel_subdirs or self._get_kernel_subdirs(structure)
+
+        # --- 新增调试信息 ---
+        print(f"--- DEBUG: KernelLLMFL __init__ set self.kernel_subdirs to: {self.kernel_subdirs} ---")
     
     def _get_kernel_subdirs(self, structure):
         """获取内核的一级子目录"""
@@ -813,6 +818,7 @@ class KernelLLMFL(LLMFL):
                 filtered.append(item)
         return filtered
     
+    # checkhere
     def localize_by_subdirs(self, top_n=5, mock=False):
         """分子目录进行定位，然后合并结果"""
         all_results = []
@@ -820,13 +826,14 @@ class KernelLLMFL(LLMFL):
         
         for subdir in self.kernel_subdirs:
             self.logger.info(f"正在定位子目录: {subdir}")
-            
+            print(f"--- DEBUG: Processing subdir: {subdir} ---")
             # 过滤出该子目录的结构
-            subdir_structure = self._filter_structure_by_subdir(self.structure, subdir)
-            
+            subdir_structure = self.structure
+            # print(f"--- DEBUG: Filtered structure for subdir {subdir}: {subdir_structure} ---")
             if not subdir_structure:
                 continue
-                
+            
+            print(f"creating temp FL instance for subdir: {subdir}")
             # 为该子目录创建临时FL实例
             temp_fl = LLMFL(
                 instance_id=f"{self.instance_id}_{subdir}",
@@ -836,7 +843,7 @@ class KernelLLMFL(LLMFL):
                 backend=self.backend,
                 logger=self.logger
             )
-            
+            print(f"temp FL instance created for subdir: {subdir}")
             # 对该子目录进行定位
             try:
                 found_files, details, traj = temp_fl.localize(top_n=top_n, mock=mock)

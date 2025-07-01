@@ -650,18 +650,18 @@ def get_full_file_paths_and_classes_and_functions(structure, current_path=""):
 
 PROJECT_FILE_LOC = os.environ.get("PROJECT_FILE_LOC", None)
 
+# (instance_id, "torvalds/linux", bug["commit"], "playground")
+def get_repo_structure(instance_id: str, repo_name, base_commit, playground,subdirs=None):
 
-def get_repo_structure(instance_id: str, repo_name, base_commit, playground):
-
-    if PROJECT_FILE_LOC is not None:
-        with open(PROJECT_FILE_LOC + "/" + instance_id + ".json") as f:
-            d = json.load(f)
-        repo_structure = d["structure"]
-    else:
-        d = get_project_structure_from_scratch(
-            repo_name, base_commit, instance_id, playground
-        )
-        repo_structure = d["structure"]
+    # if PROJECT_FILE_LOC is not None:
+    #     with open(PROJECT_FILE_LOC + "/" + instance_id + ".json") as f:
+    #         d = json.load(f)
+    #     repo_structure = d["structure"]
+    # else:
+    d = get_project_structure_from_scratch(
+            repo_name, base_commit, instance_id, playground, subdirs=subdirs
+    )
+    repo_structure = d["structure"]
 
     return repo_structure
 

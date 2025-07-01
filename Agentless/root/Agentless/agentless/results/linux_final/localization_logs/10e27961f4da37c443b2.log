@@ -1,0 +1,9 @@
+2025-06-30 12:45:38,913 - INFO - Processing bug 10e27961f4da37c443b2 with DIRECT HIERARCHICAL strategy
+2025-06-30 12:50:37,675 - INFO - Processing bug 10e27961f4da37c443b2 with DIRECT HIERARCHICAL strategy
+2025-06-30 12:53:24,103 - INFO - Processing bug 10e27961f4da37c443b2 with DIRECT HIERARCHICAL strategy
+2025-06-30 21:18:50,727 - INFO - Processing bug 10e27961f4da37c443b2 with DIRECT HIERARCHICAL strategy
+2025-06-30 22:40:33,094 - INFO - 正在定位子目录: fs
+2025-06-30 22:40:33,094 - ERROR - Hierarchical localization failed for 10e27961f4da37c443b2: string indices must be integers, not 'str'
+2025-07-01 03:05:22,363 - INFO - Processing bug 10e27961f4da37c443b2 with DIRECT HIERARCHICAL strategy
+2025-07-01 03:11:56,858 - INFO - 正在定位子目录: fs
+2025-07-01 03:11:56,858 - ERROR - Hierarchical localization failed for 10e27961f4da37c443b2: string indices must be integers, not 'str'

@@ -1,0 +1,6 @@
+2025-06-30 12:45:38,917 - INFO - Processing bug 5b82f0e951f8c2bcdb8f with DIRECT HIERARCHICAL strategy
+2025-06-30 12:50:37,677 - INFO - Processing bug 5b82f0e951f8c2bcdb8f with DIRECT HIERARCHICAL strategy
+2025-06-30 12:56:07,210 - INFO - Processing bug 5b82f0e951f8c2bcdb8f with DIRECT HIERARCHICAL strategy
+2025-07-01 03:51:52,551 - INFO - Processing bug 5b82f0e951f8c2bcdb8f with DIRECT HIERARCHICAL strategy
+2025-07-01 05:14:24,094 - INFO - 正在定位子目录: fs
+2025-07-01 05:14:24,094 - ERROR - Hierarchical localization failed for 5b82f0e951f8c2bcdb8f: string indices must be integers, not 'str'

@@ -27,6 +27,7 @@ def load_kernel_dataset(jsonl_path):
             # 转换为FL需要的格式
             processed_item = {
                 'instance_id': item['id'],
+                'commit':item['commit'],
                 'problem_statement': f"Bug Title: {item.get('bug_title', 'Unknown')}\n\nReport: {item['report']}"
             }
             data.append(processed_item)
@@ -535,13 +536,16 @@ def check_valid_args(args):
     ), "Must specify `--backend deepseek` if using a DeepSeek model"
 
 # 2. 新增专门用于执行分层定位的函数
+from agentless.util.preprocess_data import get_repo_structure
+
 def localize_hierarchical_instance(
     bug, args, swe_bench_data, start_file_locs, existing_instance_ids, write_lock=None
 ):
     instance_id = bug["instance_id"]
-    print(instance_id)
+    # print(instance_id)
     log_file = os.path.join(args.output_folder, "localization_logs", f"{instance_id}.log")
-    print(bug["commit"])
+    # print(bug)
+    # print(bug["commit"])
     if args.target_id and args.target_id != instance_id:
         return
 
@@ -555,11 +559,21 @@ def localize_hierarchical_instance(
     problem_statement = bug["problem_statement"]
     
     # 获取代码结构
-    structure = get_repo_structure(instance_id, torvalds/linux, bug["commit"], "playground")
+    structure = get_repo_structure(
+        instance_id, 
+        "torvalds/linux", 
+        bug["commit"], 
+        "playground",
+        subdirs=args.target_subdirectories
+    )
+
+    print(f"INFO: Retrieved structure for {instance_id} with subdirs {args.target_subdirectories}")
     if not structure:
         logger.error(f"Failed to get repo structure for {instance_id}. Skipping.")
         return
+    print(f"INFO: Structure for {instance_id} retrieved successfully.")
 
+    
     # 关键步骤：实例化 KernelLLMFL
     kernel_fl = KernelLLMFL(
         instance_id=instance_id,
@@ -569,12 +583,15 @@ def localize_hierarchical_instance(
         backend=args.backend,
         logger=logger,
         # 传入由命令行指定的目标子目录
-        target_subdirectories=args.target_subdirectories
+        kernel_subdirs=args.target_subdirectories
     )
     
+    print(f"INFO: Starting hierarchical localization for {instance_id} with subdirs {args.target_subdirectories}")
     # 调用 localize，这将自动触发分治和重排逻辑
     try:
+        print(f"INFO: Localizing {instance_id} with top_n={args.top_n} and mock={args.mock}")
         final_ranked_files, details, traj = kernel_fl.localize(top_n=args.top_n, mock=args.mock)
+        print(f"INFO: Hierarchical localization completed for {instance_id}")
     except Exception as e:
         logger.error(f"Hierarchical localization failed for {instance_id}: {e}")
         return
@@ -689,7 +706,7 @@ def main():
     parser.add_argument(
         "--model",
         type=str,
-        default="gpt-4o-2024-05-13",
+        default="deepseek-coder",
         choices=[
             "gpt-4o-2024-05-13",
             "deepseek-coder",
@@ -700,14 +717,14 @@ def main():
     parser.add_argument(
         "--backend",
         type=str,
-        default="openai",
+        default="deepseek",
         choices=["openai", "deepseek", "anthropic"],
     )
     parser.add_argument(
         "--dataset",
         type=str,
         default="princeton-nlp/SWE-bench_Lite",
-        choices=["princeton-nlp/SWE-bench_Lite", "princeton-nlp/SWE-bench_Verified"],
+    #    choices=["princeton-nlp/SWE-bench_Lite", "princeton-nlp/SWE-bench_Verified"],
         help="Current supported dataset for evaluation",
     )
 
@@ -727,7 +744,7 @@ def main():
     elif args.irrelevant:
         localize_irrelevant(args)
     else:
-        localize(args)
+        dispatch_localization(args)
 
 
 if __name__ == "__main__":

@@ -95,37 +95,187 @@ def create_structure(directory_path):
     """
     通过解析C/H文件来创建仓库目录的结构。
     """
+    print(f"开始分析目录结构: {directory_path}")
     structure = {}
+    total_files = 0
+    c_files = 0
+    parsed_files = 0
+    skipped_dirs = 0
     
+    # 首先统计总文件数，用于进度显示
+    print("正在统计文件总数...")
     for root, _, files in os.walk(directory_path):
         if '.git' in root:
             continue
-            
-        # 为了与Python版本完全一致，我们在这里构建嵌套字典
-        relative_root = os.path.relpath(root, directory_path)
+        total_files += len(files)
+    
+    print(f"发现 {total_files} 个文件，开始解析...")
+    
+    processed_files = 0
+    
+    for root, dirs, files in os.walk(directory_path):
+        if '.git' in root:
+            skipped_dirs += 1
+            continue
         
+        # 显示当前处理的目录
+        relative_root = os.path.relpath(root, directory_path)
+        if relative_root == ".":
+            print(f"\n📁 处理根目录")
+        else:
+            print(f"\n📁 处理目录: {relative_root}")
+        
+        # 为了与Python版本完全一致，我们在这里构建嵌套字典
         curr_struct = structure
         if relative_root != ".":
             for part in relative_root.split(os.sep):
                 curr_struct = curr_struct.setdefault(part, {})
         
+        print(f"   发现 {len(files)} 个文件")
+        
         for file_name in files:
+            processed_files += 1
             if file_name.endswith((".c", ".h")):
+                c_files += 1
                 file_path = os.path.join(root, file_name)
-                structs, functions, file_lines = parse_c_file(file_path)
-                # 这里的字典键名与Python版本保持一致，用 'classes' 对应 'structs'
-                curr_struct[file_name] = {
-                    "classes": structs, # 用 'classes' 键来存储C的结构体信息
-                    "functions": functions,
-                    "text": file_lines,
-                }
+                print(f"   🔍 解析 C/H 文件: {file_name}", end="")
+                
+                try:
+                    structs, functions, file_lines = parse_c_file(file_path)
+                    # 这里的字典键名与Python版本保持一致，用 'classes' 对应 'structs'
+                    curr_struct[file_name] = {
+                        "classes": structs, # 用 'classes' 键来存储C的结构体信息
+                        "functions": functions,
+                        "text": file_lines,
+                    }
+                    
+                    # 显示解析结果
+                    print(f" ✅ (结构体: {len(structs)}, 函数: {len(functions)}, 行数: {len(file_lines)})")
+                    parsed_files += 1
+                    
+                except Exception as e:
+                    print(f" ❌ 解析失败: {e}")
+                    curr_struct[file_name] = {
+                        "classes": [],
+                        "functions": [],
+                        "text": [],
+                    }
             else:
                 curr_struct[file_name] = {}
+                print(f"   📄 记录其他文件: {file_name}")
+            
+            # 显示进度
+            if processed_files % 100 == 0 or processed_files == total_files:
+                progress = (processed_files / total_files) * 100
+                print(f"\n   📊 进度: {processed_files}/{total_files} ({progress:.1f}%)")
+    
+    # 最终统计
+    print(f"\n" + "="*60)
+    print(f"📈 解析完成!")
+    print(f"   总文件数: {total_files}")
+    print(f"   C/H文件数: {c_files}")
+    print(f"   成功解析: {parsed_files}")
+    print(f"   跳过的Git目录: {skipped_dirs}")
+    print(f"   解析成功率: {(parsed_files/max(c_files,1)*100):.1f}%")
+    print("="*60)
+                
+    return structure
+def create_structure_for_subdirs(directory_path, target_subdirs=None):
+    """
+    只解析指定子目录的结构，提高效率
+    """
+    print(f"开始分析目录结构: {directory_path}")
+    if target_subdirs:
+        print(f"只解析子目录: {target_subdirs}")
+    
+    structure = {}
+    total_files = 0
+    c_files = 0
+    parsed_files = 0
+    skipped_dirs = 0
+    
+    for root, dirs, files in os.walk(directory_path):
+        if '.git' in root:
+            skipped_dirs += 1
+            continue
+        
+        # 获取相对路径
+        relative_root = os.path.relpath(root, directory_path)
+        
+        # 如果指定了目标子目录，检查当前路径是否在目标范围内
+        if target_subdirs and relative_root != ".":
+            # 检查是否是目标子目录或其子目录
+            is_target = False
+            for subdir in target_subdirs:
+                if relative_root == subdir or relative_root.startswith(subdir + os.sep):
+                    is_target = True
+                    break
+            
+            if not is_target:
+                continue  # 跳过非目标子目录
+        
+        # 显示当前处理的目录
+        if relative_root == ".":
+            print(f"\n📁 处理根目录")
+        else:
+            print(f"\n📁 处理目录: {relative_root}")
+        
+        # 构建嵌套字典
+        curr_struct = structure
+        if relative_root != ".":
+            for part in relative_root.split(os.sep):
+                curr_struct = curr_struct.setdefault(part, {})
+        
+        print(f"   发现 {len(files)} 个文件")
+        
+        for file_name in files:
+            total_files += 1
+            if file_name.endswith((".c", ".h")):
+                c_files += 1
+                file_path = os.path.join(root, file_name)
+                print(f"   🔍 解析 C/H 文件: {file_name}", end="")
+                
+                try:
+                    structs, functions, file_lines = parse_c_file(file_path)
+                    curr_struct[file_name] = {
+                        "classes": structs,
+                        "functions": functions,
+                        "text": file_lines,
+                    }
+                    
+                    print(f" ✅ (结构体: {len(structs)}, 函数: {len(functions)}, 行数: {len(file_lines)})")
+                    parsed_files += 1
+                    
+                except Exception as e:
+                    print(f" ❌ 解析失败: {e}")
+                    curr_struct[file_name] = {
+                        "classes": [],
+                        "functions": [],
+                        "text": [],
+                    }
+            else:
+                curr_struct[file_name] = {}
+                print(f"   📄 记录其他文件: {file_name}")
+            
+            # 显示进度
+            if total_files % 100 == 0:
+                print(f"\n   📊 已处理: {total_files} 个文件")
+    
+    # 最终统计
+    print(f"\n" + "="*60)
+    print(f"📈 解析完成!")
+    print(f"   总文件数: {total_files}")
+    print(f"   C/H文件数: {c_files}")
+    print(f"   成功解析: {parsed_files}")
+    print(f"   跳过的Git目录: {skipped_dirs}")
+    if target_subdirs:
+        print(f"   目标子目录: {target_subdirs}")
+    print("="*60)
                 
     return structure
 
 
-def get_project_structure_from_scratch(repo_name, commit_id, instance_id, repo_playground):
+def get_project_structure_from_scratch(repo_name, commit_id, instance_id, repo_playground,subdirs=None):
     """
     【C语言版】
     与Python版本逻辑完全相同的顶层接口。
@@ -136,20 +286,22 @@ def get_project_structure_from_scratch(repo_name, commit_id, instance_id, repo_p
     os.makedirs(temp_playground)
     
     # 2. 在沙盒中克隆仓库
-    local_folder_name = repo_name.split('/')[-1]
-    local_repo_path = os.path.join(temp_playground, local_folder_name)
-    clone_repo(repo_name, local_repo_path)
-    
+    # local_folder_name = repo_name.split('/')[-1]
+    # local_repo_path = os.path.join(temp_playground, local_folder_name)
+    # clone_repo(repo_name, local_repo_path)
+
+    local_repo_path = "/root/Agentless/linux"  # 假设你的Linux仓库在这里
+    checkout_commit(local_repo_path, commit_id)
     # 3. 检出commit
-    if not checkout_commit(local_repo_path, commit_id):
-        print(f"检出失败，清理并退出对 {instance_id} 的分析。")
-        subprocess.run(["rm", "-rf", temp_playground], check=True)
-        return None
+    # if not checkout_commit(local_repo_path, commit_id):
+    #     print(f"检出失败，清理并退出对 {instance_id} 的分析。")
+    # subprocess.run(["rm", "-rf", temp_playground], check=True)
+        # return None
 
     # 4. 分析结构
     print("开始分析代码结构...")
-    structure = create_structure(local_repo_path)
-    
+    # structure = create_structure(local_repo_path)
+    structure = create_structure_for_subdirs(local_repo_path, subdirs)
     # 5. 清理沙盒
     print(f"清理临时文件夹: {temp_playground}")
     subprocess.run(["rm", "-rf", temp_playground], check=True)
